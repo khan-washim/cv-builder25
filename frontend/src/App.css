@@ -1,0 +1,109 @@
+/* app.css - Component Styles */
+
+/* HEADER */
+.header {
+  background-color: #007bff;
+  color: rgb(185, 48, 48);
+  padding: 15px 0;
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* NAVBAR */
+.navbar {
+  background-color: #fff;
+  padding: 10px 20px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navbar .nav-link {
+  color: #333;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+.navbar .nav-link:hover {
+  color: #007bff;
+}
+
+/* MAIN CONTENT */
+.main-content {
+  padding: 30px;
+  min-height: 80vh;
+  background-color: #f8f9fa;
+}
+
+/* CV BUILDER FORM */
+.cv-form {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Form Labels */
+.form-label {
+  font-weight: 600;
+}
+
+/* CV PREVIEW */
+.cv-preview {
+  padding: 30px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* PROFILE SECTION */
+.profile-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* PROFILE DETAILS */
+.profile-details h4 {
+  margin-bottom: 5px;
+  color: #007bff;
+}
+
+/* SKILLS LIST */
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skills-list span {
+  background: #007bff;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* FOOTER */
+.footer {
+  background-color: #007bff;
+  color: white;
+  text-align: center;
+  padding: 15px 0;
+  margin-top: 30px;
+}
+
+/* MOBILE RESPONSIVE */
+@media (max-width: 768px) {
+  .profile-section {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .skills-list {
+    justify-content: center;
+  }
+
+  .navbar {
+    text-align: center;
+  }
+}
