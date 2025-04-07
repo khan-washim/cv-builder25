@@ -1,33 +1,28 @@
-
-import React from "react";
-
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import CreateCV from "./pages/CreateCv";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import CreateCv from "./pages/CreateCv";
-import Dashboard from "./pages/Dashboard";
-import CvPreview from "./pages/CvPreview";
-import { js } from '@eslint/js';
- 
-const App = () => {
+
+function App() {
   return (
     <Router>
       <Navbar />
-      <div className="container mt-4">
+      <div className="min-vh-100">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/create-cv" element={<CreateCv />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/cv-preview/:id" element={<CvPreview />} />
+          <Route path="/create-cv" element={<CreateCV />} />
         </Routes>
       </div>
       <Footer />
     </Router>
   );
-};
+}
 
 export default App;

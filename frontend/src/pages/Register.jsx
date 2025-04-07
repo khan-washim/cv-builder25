@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import Footer from "../components/Footer";
-// Footer Component
+
 
 
 const Register = () => {
@@ -70,8 +69,7 @@ const Register = () => {
         </button>
       </div>
 
-      {/* Footer Component */}
-      <Footer />
+      
     </div>
   );
 };

@@ -10,25 +10,23 @@ const Home = () => {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    const defaultFeatures = [
+    // Features
+    setFeatures([
       { icon: <FaFileAlt />, title: "Multiple Templates", text: "Pick from modern CV templates." },
       { icon: <FaPalette />, title: "Customizable Colors", text: "Match your style with theme colors." },
       { icon: <FaSave />, title: "Save & Edit Anytime", text: "Keep your CVs in one place." },
       { icon: <FaDownload />, title: "Download in PDF", text: "Get a professional CV instantly." }
-    ];
+    ]);
 
-    setFeatures(defaultFeatures);
+    // Load saved CVs from localStorage
+    const storedCVs = localStorage.getItem("userCvs");
+    if (storedCVs) {
+      const parsed = JSON.parse(storedCVs);
+      const latestFirst = parsed.slice().reverse().slice(0, 5); // Show last 5 saved
+      setSavedCVs(latestFirst);
+    }
 
-    const fetchSavedCVs = () => {
-      const storedCVs = localStorage.getItem("userCvs");
-      if (storedCVs) {
-        const parsedCVs = JSON.parse(storedCVs);
-        setSavedCVs(parsedCVs.slice(0, 5)); // Show max 5 saved CVs
-      }
-      setLoading(false);
-    };
-
-    fetchSavedCVs();
+    setLoading(false);
   }, []);
 
   const handleGetStarted = () => {
@@ -41,10 +39,8 @@ const Home = () => {
   };
 
   const handleViewCV = (cv) => {
-    if (cv) {
-      setSelectedCV(cv);
-      setShowModal(true);
-    }
+    setSelectedCV(cv);
+    setShowModal(true);
   };
 
   return (
@@ -65,8 +61,8 @@ const Home = () => {
         <Container>
           <h2 className="text-center fw-bold mb-4">Why Choose Our CV Builder?</h2>
           <Row className="g-4">
-            {features.map((feature, index) => (
-              <Col md={6} lg={3} key={index}>
+            {features.map((feature, idx) => (
+              <Col md={6} lg={3} key={idx}>
                 <Card className="text-center shadow-sm border-0 p-3">
                   <Card.Body>
                     <div className="fs-2 text-primary">{feature.icon}</div>
@@ -87,29 +83,29 @@ const Home = () => {
           <Row className="d-flex justify-content-center">
             {loading ? (
               <p className="text-center">Loading saved CVs...</p>
+            ) : savedCVs.length > 0 ? (
+              savedCVs.map((cv, idx) => (
+                <Col md={4} sm={6} key={idx} className="mb-4">
+                  <Card className="shadow-sm border-0 text-center">
+                    <Card.Body>
+                      <Image
+                        src={cv.image || "https://via.placeholder.com/120"}
+                        roundedCircle
+                        width="120"
+                        height="120"
+                        className="mb-3"
+                      />
+                      <h5>{cv.name || "Unnamed CV"}</h5>
+                      <p>{cv.email || "No Email"}</p>
+                      <Button className="btn btn-outline-primary btn-sm" onClick={() => handleViewCV(cv)}>
+                        View CV
+                      </Button>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))
             ) : (
-              savedCVs.length > 0 ? (
-                savedCVs.map((cv, idx) => (
-                  <Col md={4} sm={6} key={idx} className="mb-4">
-                    <Card className="shadow-sm border-0 text-center">
-                      <Card.Body>
-                        <Image
-                          src={cv.image || "https://via.placeholder.com/120"}
-                          roundedCircle
-                          width="120"
-                          height="120"
-                          className="mb-3"
-                        />
-                        <h5>{cv.name || "No Name Provided"}</h5>
-                        <p>{cv.email || "No Email Provided"}</p>
-                        <Button className="btn btn-primary" onClick={() => handleViewCV(cv)}>View CV</Button>
-                      </Card.Body>
-                    </Card>
-                  </Col>
-                ))
-              ) : (
-                <p className="text-center">No saved CVs found.</p>
-              )
+              <p className="text-center text-muted">No saved CVs found.</p>
             )}
           </Row>
         </Container>
@@ -130,10 +126,12 @@ const Home = () => {
                 height="150"
                 className="mb-3"
               />
-              <h3>{selectedCV.name || "No Name Provided"}</h3>
-              <p>{selectedCV.email || "No Email Provided"}</p>
-              <p>{selectedCV.phone || "No Phone Number Provided"}</p>
-              <p>{selectedCV.address || "No Address Provided"}</p>
+              <h4>{selectedCV.name}</h4>
+              <p><strong>Email:</strong> {selectedCV.email}</p>
+              <p><strong>Phone:</strong> {selectedCV.phone}</p>
+              <p><strong>Address:</strong> {selectedCV.address}</p>
+              <p><strong>Profession:</strong> {selectedCV.profession}</p>
+              <p><strong>Summary:</strong> {selectedCV.summary}</p>
             </div>
           ) : (
             <p className="text-center">No CV selected.</p>

@@ -1,67 +1,51 @@
-import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
+import { useEffect, useState } from "react";
+import { Navbar, Nav, Container, Button } from "react-bootstrap";
 
-const Navbar = () => {
+const AppNavbar = () => {
+  const [loggedIn, setLoggedIn] = useState(false);
   const navigate = useNavigate();
-  const isLoggedIn = localStorage.getItem("userLoggedIn");
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    setLoggedIn(!!token);
+  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("userLoggedIn");
-    navigate("/login");
+    localStorage.removeItem("authToken");
+    setLoggedIn(false);
+    navigate("/");
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-light shadow-lg sticky-top">
-      <div className="container">
-        <Link className="navbar-brand fw-bold text-primary" to="/">CV Builder</Link>
-
-        {/* Toggle Button for Mobile */}
-        <button 
-          className="navbar-toggler" 
-          type="button" 
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
-
-        <div className={`collapse navbar-collapse ${isMenuOpen ? "show" : ""}`} id="navbarNav">
-          <ul className="navbar-nav ms-auto">
-            <li className="nav-item">
-              <Link className="nav-link fw-semibold" to="/" onClick={() => setIsMenuOpen(false)}>Home</Link>
-            </li>
-
-            {isLoggedIn ? (
+    <Navbar bg="light" expand="lg" className="shadow-sm">
+      <Container>
+        <Navbar.Brand as={Link} to="/" className="fw-bold">
+          CV Builder
+        </Navbar.Brand>
+        <Navbar.Toggle />
+        <Navbar.Collapse className="justify-content-end">
+          <Nav>
+            <Nav.Link as={Link} to="/">Home</Nav.Link>
+            {loggedIn && (
               <>
-                <li className="nav-item">
-                  <Link className="nav-link text-warning fw-semibold" to="/dashboard" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
-                </li>
-                <li className="nav-item">
-                  <button 
-                    className="btn btn-danger ms-2 fw-semibold" 
-                    onClick={() => { handleLogout(); setIsMenuOpen(false); }}
-                  >
-                    Logout
-                  </button>
-                </li>
+                <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
+                <Nav.Link as={Link} to="/create-cv">Create CV</Nav.Link>
+                <Button variant="outline-danger" onClick={handleLogout} className="ms-2">Logout</Button>
               </>
-            ) : (
-              <li className="nav-item">
-                <Link 
-                  className="btn btn-success ms-2 fw-semibold" 
-                  to="/login" 
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Login
-                </Link>
-              </li>
             )}
-          </ul>
-        </div>
-      </div>
-    </nav>
+            {!loggedIn && (
+              <>
+                
+                <Nav.Link as={Link} to="/register">Register</Nav.Link>
+                <Nav.Link as={Link} to="/login">Login</Nav.Link>
+              </>
+            )}
+          </Nav>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
   );
 };
 
-export default Navbar;
+export default AppNavbar;
