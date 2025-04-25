@@ -1,73 +1,96 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
-
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState(null);
   const navigate = useNavigate();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
 
-  const handleLogin = () => {
-    const storedEmail = localStorage.getItem("authToken");
+  const handleLogin = async (e) => {
+    e.preventDefault();
 
-    if (!email || !password) {
-      setMessage({ text: "Please fill in all fields!", type: "danger" });
-      return;
-    }
+    try {
+      const response = await fetch('http://localhost:5000/api/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
 
-    if (email === storedEmail) {
-      setMessage({ text: "Login successful! Redirecting to dashboard...", type: "success" });
+      const data = await response.json();
 
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 2000);
-    } else {
-      setMessage({ text: "Invalid credentials!", type: "danger" });
+      if (response.ok) {
+        setMessage('Login successful!');
+        localStorage.setItem('user', JSON.stringify(data));
+        navigate('/dashboard');
+      } else {
+        setMessage(data.message || 'Login failed.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setMessage('Something went wrong. Please try again.');
     }
   };
 
   return (
-    <div className="container mt-5 d-flex flex-column align-items-center">
-      <div className="card shadow-lg p-4 border-0 rounded" style={{ maxWidth: "400px" }}>
-        <h3 className="text-center mb-4 fw-bold">🔐 Login</h3>
+    <div className="container d-flex justify-content-center align-items-center min-vh-100">
+      <div className="card p-4 shadow-lg" style={{ maxWidth: '400px', width: '100%' }}>
+        <h3 className="text-center mb-4">Login</h3>
+        <form onSubmit={handleLogin}>
+          <div className="mb-3">
+            <label htmlFor="name" className="form-label">Name</label>
+            <input
+              type="text"
+              id="name"
+              className="form-control"
+              placeholder="Enter your name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="mb-3">
+            <label htmlFor="email" className="form-label">Email</label>
+            <input
+              type="email"
+              id="email"
+              className="form-control"
+              placeholder="Enter your email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="mb-3">
+            <label htmlFor="password" className="form-label">Password</label>
+            <input
+              type="password"
+              id="password"
+              className="form-control"
+              placeholder="Enter your password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button type="submit" className="btn btn-primary w-100">Login</button>
+        </form>
 
         {message && (
-          <div className={`alert alert-${message.type} text-center`} role="alert">
-            {message.text}
+          <div
+            className={`mt-3 alert ${message === 'Login successful!' ? 'alert-success' : 'alert-danger'}`}
+            role="alert"
+          >
+            {message}
           </div>
         )}
-
-        <div className="mb-3">
-          <label className="form-label fw-semibold">Email</label>
-          <input
-            type="email"
-            className="form-control"
-            placeholder="Enter email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label fw-semibold">Password</label>
-          <input
-            type="password"
-            className="form-control"
-            placeholder="Enter password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-
-        <button className="btn btn-success w-100 fw-bold" onClick={handleLogin}>
-          Login
-        </button>
       </div>
-
-      {/* Footer Component */}
-      
     </div>
   );
 };

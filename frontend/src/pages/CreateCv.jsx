@@ -1,145 +1,243 @@
-import React, { useRef, useState } from 'react';
-import { useReactToPrint } from 'react-to-print';
-import jsPDF from 'jspdf';
-import 'bootstrap/dist/css/bootstrap.min.css';
-
-const templates = ["Template 1", "Template 2", "Template 3", "Template 4", "Template 5"];
-
-const CVPreview = React.forwardRef(({ data, selectedTemplate }, ref) => (
-  <div ref={ref} className={`p-4 border rounded my-3 ${selectedTemplate.toLowerCase().replace(' ', '-')}`}>
-    {data.profileImage && (
-      <img
-        src={URL.createObjectURL(data.profileImage)}
-        alt="Profile"
-        style={{ width: '100px', height: '100px', objectFit: 'cover' }}
-        className="rounded-circle mb-3"
-      />
-    )}
-    <h2>{data.fullName}</h2>
-    <p>{data.email} | {data.phone} | {data.address}</p>
-    <p>LinkedIn: {data.linkedin}</p>
-    <p>GitHub: {data.github}</p>
-    <h4>About</h4>
-    <p>{data.about}</p>
-    <h4>Experience</h4>
-    <p>{data.experience}</p>
-    <h4>Education</h4>
-    <p>{data.education}</p>
-    <h4>Skills</h4>
-    <p>{data.skills}</p>
-    <h4>Expertise</h4>
-    <p>{data.expertise}</p>
-    <h4>Languages</h4>
-    <p>{data.languages}</p>
-  </div>
-));
+import React, { useRef, useState } from "react";
+import axios from "axios";
+import { useReactToPrint } from "react-to-print";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const CreateCV = () => {
-  const [formData, setFormData] = useState({
-    fullName: '', email: '', phone: '', address: '', linkedin: '', github: '', about: '', experience: '', education: '', skills: '', expertise: '', languages: '', profileImage: null,
+  const [cvData, setCvData] = useState({
+    fullName: "",
+    profession: "",
+    email: "",
+    phone: "",
+    address: "",
+    summary: "",
+    education: [{ institution: "", degree: "", field: "", startYear: "", endYear: "" }],
+    experience: [{ company: "", position: "", startDate: "", endDate: "", description: "" }],
+    skills: [],
+    languages: [],
+    linkedin: "",
+    github: "",
+    website: "",
+    hobbies: "",
+    certifications: [],
+    achievements: [],
+    profileImage: "",
+    nationality: "",
+    dob: "",
+    maritalStatus: "",
   });
-  const [selectedTemplate, setSelectedTemplate] = useState("Template 1");
-  const componentRef = useRef();
 
-  const handlePrint = useReactToPrint({ content: () => componentRef.current });
-
-  const handlePDF = () => {
-    const pdf = new jsPDF('p', 'pt', 'a4');
-    pdf.html(componentRef.current, {
-      callback: function (doc) {
-        doc.save(`${formData.fullName || 'cv'}.pdf`);
-      },
-      x: 10,
-      y: 10
-    });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCvData({ ...cvData, [name]: value });
   };
 
-  const handleSave = () => {
-    const savedCVs = JSON.parse(localStorage.getItem('savedCVs')) || [];
+  const handleArrayChange = (index, field, value, type) => {
+    const updated = [...cvData[type]];
+    updated[index][field] = value;
+    setCvData({ ...cvData, [type]: updated });
+  };
+
+  const handleAddItem = (type, itemTemplate) => {
+    setCvData({ ...cvData, [type]: [...cvData[type], itemTemplate] });
+  };
+
+  const handleListInputChange = (type, value) => {
+    setCvData({ ...cvData, [type]: value.split(",").map((item) => item.trim()) });
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
     const reader = new FileReader();
-
     reader.onloadend = () => {
-      const newCV = {
-        ...formData,
-        profileImage: formData.profileImage ? reader.result : null,
-        selectedTemplate,
-        savedAt: new Date().toISOString(),
-      };
-      savedCVs.push(newCV);
-      localStorage.setItem('savedCVs', JSON.stringify(savedCVs));
-      alert('CV saved successfully!');
+      setCvData({ ...cvData, profileImage: reader.result });
     };
+    if (file) reader.readAsDataURL(file);
+  };
 
-    if (formData.profileImage) {
-      reader.readAsDataURL(formData.profileImage);
-    } else {
-      const newCV = {
-        ...formData,
-        profileImage: null,
-        selectedTemplate,
-        savedAt: new Date().toISOString(),
-      };
-      savedCVs.push(newCV);
-      localStorage.setItem('savedCVs', JSON.stringify(savedCVs));
-      alert('CV saved successfully!');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post("http://localhost:5000/api/cvs/create", cvData);
+      alert("CV created successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Error creating CV.");
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value, type, files } = e.target;
-    setFormData({ ...formData, [name]: type === 'file' ? files[0] : value });
+  // PDF & Print
+  const cvRef = useRef();
+  const handlePrint = useReactToPrint({ content: () => cvRef.current });
+
+  const handleDownloadPDF = async () => {
+    const canvas = await html2canvas(cvRef.current);
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF();
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+    pdf.save("cv.pdf");
   };
 
   return (
-    <div className="container my-4">
-      <h2 className="text-center mb-4">Create CV</h2>
+    <div className="container py-4">
       <div className="row">
-        <div className="col-md-6">
-          <form>
-            <div className="mb-3">
-              <label className="form-label">Profile Image</label>
-              <input type="file" className="form-control" name="profileImage" accept="image/*" onChange={handleChange} />
+        {/* Left Side - CV Form */}
+        <form onSubmit={handleSubmit} className="col-md-6">
+          <h3>Create Your CV</h3>
+          <input className="form-control mb-2" name="fullName" placeholder="Full Name" value={cvData.fullName} onChange={handleChange} required />
+          <input className="form-control mb-2" name="profession" placeholder="Profession" value={cvData.profession} onChange={handleChange} required />
+          <input className="form-control mb-2" name="email" type="email" placeholder="Email" value={cvData.email} onChange={handleChange} required />
+          <input className="form-control mb-2" name="phone" placeholder="Phone" value={cvData.phone} onChange={handleChange} required />
+          <input className="form-control mb-2" name="address" placeholder="Address" value={cvData.address} onChange={handleChange} />
+          <textarea className="form-control mb-2" name="summary" placeholder="Summary" value={cvData.summary} onChange={handleChange} />
+
+          {/* Education Section */}
+          <h5>Education</h5>
+          {cvData.education.map((edu, index) => (
+            <div key={index} className="mb-3">
+              <input className="form-control mb-1" placeholder="Institution" value={edu.institution} onChange={(e) => handleArrayChange(index, "institution", e.target.value, "education")} />
+              <input className="form-control mb-1" placeholder="Degree" value={edu.degree} onChange={(e) => handleArrayChange(index, "degree", e.target.value, "education")} />
+              <input className="form-control mb-1" placeholder="Field" value={edu.field} onChange={(e) => handleArrayChange(index, "field", e.target.value, "education")} />
+              <input className="form-control mb-1" placeholder="Start Year" value={edu.startYear} onChange={(e) => handleArrayChange(index, "startYear", e.target.value, "education")} />
+              <input className="form-control mb-1" placeholder="End Year" value={edu.endYear} onChange={(e) => handleArrayChange(index, "endYear", e.target.value, "education")} />
             </div>
-            {["fullName", "email", "phone", "address", "linkedin", "github", "skills", "expertise", "languages"].map((field, idx) => (
-              <div className="mb-3" key={idx}>
-                <label className="form-label">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-                <input
-                  type={field.includes("email") ? "email" : field.includes("linkedin") || field.includes("github") ? "url" : "text"}
-                  className="form-control"
-                  name={field}
-                  value={formData[field]}
-                  onChange={handleChange}
-                />
-              </div>
-            ))}
-            {["about", "experience", "education"].map((field, idx) => (
-              <div className="mb-3" key={idx}>
-                <label className="form-label">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-                <textarea
-                  className="form-control"
-                  name={field}
-                  value={formData[field]}
-                  onChange={handleChange}
-                  rows="3"
-                ></textarea>
-              </div>
-            ))}
-            <div className="mb-3">
-              <label className="form-label">Choose Template</label>
-              <select className="form-select" value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)}>
-                {templates.map((tpl, index) => (
-                  <option key={index} value={tpl}>{tpl}</option>
-                ))}
-              </select>
+          ))}
+          <button type="button" className="btn btn-outline-primary mb-3" onClick={() => handleAddItem("education", { institution: "", degree: "", field: "", startYear: "", endYear: "" })}>+ Add Education</button>
+
+          {/* Experience */}
+          <h5>Experience</h5>
+          {cvData.experience.map((exp, index) => (
+            <div key={index} className="mb-3">
+              <input className="form-control mb-1" placeholder="Company" value={exp.company} onChange={(e) => handleArrayChange(index, "company", e.target.value, "experience")} />
+              <input className="form-control mb-1" placeholder="Position" value={exp.position} onChange={(e) => handleArrayChange(index, "position", e.target.value, "experience")} />
+              <input className="form-control mb-1" placeholder="Start Date" value={exp.startDate} onChange={(e) => handleArrayChange(index, "startDate", e.target.value, "experience")} />
+              <input className="form-control mb-1" placeholder="End Date" value={exp.endDate} onChange={(e) => handleArrayChange(index, "endDate", e.target.value, "experience")} />
+              <textarea className="form-control mb-1" placeholder="Description" value={exp.description} onChange={(e) => handleArrayChange(index, "description", e.target.value, "experience")} />
             </div>
-          </form>
+          ))}
+          <button type="button" className="btn btn-outline-primary mb-3" onClick={() => handleAddItem("experience", { company: "", position: "", startDate: "", endDate: "", description: "" })}>+ Add Experience</button>
+
+          <input className="form-control mb-2" placeholder="Skills (comma separated)" value={cvData.skills.join(", ")} onChange={(e) => handleListInputChange("skills", e.target.value)} />
+          <input className="form-control mb-2" placeholder="Languages (comma separated)" value={cvData.languages.join(", ")} onChange={(e) => handleListInputChange("languages", e.target.value)} />
+          <input className="form-control mb-2" placeholder="Certifications (comma separated)" value={cvData.certifications.join(", ")} onChange={(e) => handleListInputChange("certifications", e.target.value)} />
+          <input className="form-control mb-2" placeholder="Achievements (comma separated)" value={cvData.achievements.join(", ")} onChange={(e) => handleListInputChange("achievements", e.target.value)} />
+
+          <input className="form-control mb-2" placeholder="LinkedIn URL" name="linkedin" value={cvData.linkedin} onChange={handleChange} />
+          <input className="form-control mb-2" placeholder="GitHub URL" name="github" value={cvData.github} onChange={handleChange} />
+          <input className="form-control mb-2" placeholder="Website URL" name="website" value={cvData.website} onChange={handleChange} />
+          <input className="form-control mb-2" placeholder="Hobbies" name="hobbies" value={cvData.hobbies} onChange={handleChange} />
+          <input className="form-control mb-2" placeholder="Nationality" name="nationality" value={cvData.nationality} onChange={handleChange} />
+          <input className="form-control mb-2" type="date" name="dob" value={cvData.dob} onChange={handleChange} />
+          <input className="form-control mb-2" placeholder="Marital Status" name="maritalStatus" value={cvData.maritalStatus} onChange={handleChange} />
+          <input className="form-control mb-2" type="file" accept="image/*" onChange={handleImageChange} />
+
+          <button type="submit" className="btn btn-success me-2">Save CV</button>
+        </form>
+
+        {/* Right Side - Preview Section (Bootstrap 4) */}
+<div
+  className="col-md-8 mx-auto mt-5"
+  style={{
+    background: "linear-gradient(to right, #e0eafc, #cfdef3)",
+    padding: "30px",
+    borderRadius: "15px",
+  }}
+>
+  <div
+    ref={cvRef}
+    className="card p-4 border-0"
+    style={{ borderRadius: "20px", backgroundColor: "#ffffff" }}
+  >
+    <div className="text-center mb-4">
+      {cvData.profileImage && (
+        <img
+          src={cvData.profileImage}
+          alt="Profile"
+          width={120}
+          className="rounded-circle border border-primary mb-3"
+          style={{ borderWidth: "2px" }}
+        />
+      )}
+      <h2 className="font-weight-bold">{cvData.fullName}</h2>
+      <p className="text-muted h5">{cvData.profession}</p>
+    </div>
+
+    <div className="mb-3">
+      <p><strong>Email:</strong> {cvData.email}</p>
+      <p><strong>Phone:</strong> {cvData.phone}</p>
+      <p><strong>Address:</strong> {cvData.address}</p>
+      <p><strong>Summary:</strong> {cvData.summary}</p>
+      <p><strong>Nationality:</strong> {cvData.nationality}</p>
+      <p><strong>Date of Birth:</strong> {cvData.dob}</p>
+      <p><strong>Marital Status:</strong> {cvData.maritalStatus}</p>
+    </div>
+
+    <hr />
+
+    {/* Education */}
+    <div className="mb-3">
+      <h5 className="font-weight-bold">Education</h5>
+      {cvData.education.map((edu, index) => (
+        <div key={index} className="mb-2">
+          <p><strong>{edu.institution}</strong> ({edu.startYear} - {edu.endYear})</p>
+          <p>{edu.degree} in {edu.field}</p>
         </div>
-        <div className="col-md-6">
-          <CVPreview data={formData} selectedTemplate={selectedTemplate} ref={componentRef} />
-          <button className="btn btn-primary me-2" onClick={handlePrint}>Print CV</button>
-          <button className="btn btn-success me-2" onClick={handlePDF}>Download PDF</button>
-          <button className="btn btn-warning" onClick={handleSave}>Save CV</button>
+      ))}
+    </div>
+
+    {/* Experience */}
+    <div className="mb-3">
+      <h5 className="font-weight-bold">Experience</h5>
+      {cvData.experience.map((exp, index) => (
+        <div key={index} className="mb-2">
+          <p><strong>{exp.company}</strong> ({exp.startDate} - {exp.endDate})</p>
+          <p>{exp.position}</p>
+          <p>{exp.description}</p>
         </div>
+      ))}
+    </div>
+
+    {/* Skills, Languages, Certifications, Achievements */}
+    <div className="mb-3">
+      <h5 className="font-weight-bold">Skills</h5>
+      <p>{cvData.skills.join(", ")}</p>
+
+      <h5 className="font-weight-bold mt-3">Languages</h5>
+      <p>{cvData.languages.join(", ")}</p>
+
+      <h5 className="font-weight-bold mt-3">Certifications</h5>
+      <p>{cvData.certifications.join(", ")}</p>
+
+      <h5 className="font-weight-bold mt-3">Achievements</h5>
+      <p>{cvData.achievements.join(", ")}</p>
+    </div>
+
+    {/* Links */}
+    <div className="mb-3">
+      {cvData.linkedin && <p><strong>LinkedIn:</strong> <a href={cvData.linkedin} target="_blank" rel="noopener noreferrer">{cvData.linkedin}</a></p>}
+      {cvData.github && <p><strong>GitHub:</strong> <a href={cvData.github} target="_blank" rel="noopener noreferrer">{cvData.github}</a></p>}
+      {cvData.website && <p><strong>Website:</strong> <a href={cvData.website} target="_blank" rel="noopener noreferrer">{cvData.website}</a></p>}
+    </div>
+
+    {/* Hobbies */}
+    {cvData.hobbies && (
+      <div className="mb-3">
+        <h5 className="font-weight-bold">Hobbies</h5>
+        <p>{cvData.hobbies}</p>
+      </div>
+    )}
+
+    <div className="text-center mt-4">
+      <button className="btn btn-primary mr-2" onClick={handlePrint}>Print CV</button>
+      <button className="btn btn-secondary" onClick={handleDownloadPDF}>Download PDF</button>
+    </div>
+  </div>
+</div>
+
       </div>
     </div>
   );

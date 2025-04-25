@@ -1,112 +1,110 @@
-import React from 'react';
+// src/pages/CVForm.jsx
+import { useState } from 'react';
+import axios from 'axios';
 
-const CVForm = ({ cvData, handleChange, handleImageUpload, handleSubmit }) => {
+const CVForm = () => {
+  const [formData, setFormData] = useState({
+    fullName: '',
+    profession: '',
+    email: '',
+    phone: '',
+    address: '',
+    summary: '',
+    education: [{
+      institution: '',
+      degree: '',
+      field: '',
+      startYear: '',
+      endYear: ''
+    }],
+    experience: [{
+      company: '',
+      position: '',
+      startDate: '',
+      endDate: '',
+      description: ''
+    }],
+    skills: [],
+    languages: [],
+    linkedin: '',
+    github: '',
+    website: '',
+    hobbies: '',
+    certifications: [],
+    achievements: [],
+    profileImage: ''
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'skills' || name === 'languages' || name === 'certifications' || name === 'achievements') {
+      setFormData({ ...formData, [name]: value.split(',') });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleNestedChange = (e, index, section) => {
+    const { name, value } = e.target;
+    const updatedArray = [...formData[section]];
+    updatedArray[index][name] = value;
+    setFormData({ ...formData, [section]: updatedArray });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post('http://localhost:5000/api/cvs', formData);
+      alert('CV Created Successfully');
+    } catch (err) {
+      console.error(err);
+      alert('Error creating CV');
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="row g-4 mt-3">
-      {/* PERSONAL INFO */}
-      <h4 className="text-center text-primary">Personal Information</h4>
+    <form onSubmit={handleSubmit} style={{ maxWidth: '800px', margin: 'auto' }}>
+      <h2>Create Your CV</h2>
+      <input name="fullName" placeholder="Full Name" onChange={handleChange} />
+      <input name="profession" placeholder="Profession" onChange={handleChange} />
+      <input name="email" placeholder="Email" onChange={handleChange} />
+      <input name="phone" placeholder="Phone" onChange={handleChange} />
+      <input name="address" placeholder="Address" onChange={handleChange} />
+      <textarea name="summary" placeholder="Summary" onChange={handleChange} />
 
-      {/* Text Inputs */}
-      {[
-        { name: "name", label: "Full Name", type: "text" },
-        { name: "email", label: "Email", type: "email" },
-        { name: "phone", label: "Phone Number", type: "text" },
-        { name: "address", label: "Address", type: "text" },
-        { name: "dob", label: "Date of Birth", type: "date" },
-        { name: "linkedin", label: "LinkedIn", type: "text" },
-        { name: "github", label: "GitHub", type: "text" },
-        { name: "nationality", label: "Nationality", type: "text" },
-        { name: "maritalStatus", label: "Marital Status", type: "text" },
-      ].map(({ name, label, type }) => (
-        <div className="col-md-6" key={name}>
-          <label className="form-label fw-semibold">{label}</label>
-          <input
-            type={type}
-            name={name}
-            className="form-control rounded-3"
-            value={cvData[name]}
-            onChange={handleChange}
-            required
-          />
+      <h3>Education</h3>
+      {formData.education.map((edu, index) => (
+        <div key={index}>
+          <input name="institution" placeholder="Institution" onChange={e => handleNestedChange(e, index, 'education')} />
+          <input name="degree" placeholder="Degree" onChange={e => handleNestedChange(e, index, 'education')} />
+          <input name="field" placeholder="Field" onChange={e => handleNestedChange(e, index, 'education')} />
+          <input name="startYear" placeholder="Start Year" onChange={e => handleNestedChange(e, index, 'education')} />
+          <input name="endYear" placeholder="End Year" onChange={e => handleNestedChange(e, index, 'education')} />
         </div>
       ))}
 
-      {/* PROFESSIONAL INFO */}
-      <h4 className="text-center text-primary">Professional Information</h4>
-
-      {[
-        { name: "education", label: "Education" },
-        { name: "experience", label: "Experience" },
-        { name: "skills", label: "Skills" },
-        { name: "languages", label: "Languages" },
-        { name: "hobbies", label: "Hobbies" },
-        { name: "summary", label: "Summary" },
-        { name: "projects", label: "Projects" },
-        { name: "references", label: "References" },
-      ].map(({ name, label }) => (
-        <div className="col-md-6" key={name}>
-          <label className="form-label fw-semibold">{label}</label>
-          <textarea
-            name={name}
-            className="form-control rounded-3"
-            value={cvData[name]}
-            onChange={handleChange}
-            required
-          />
+      <h3>Experience</h3>
+      {formData.experience.map((exp, index) => (
+        <div key={index}>
+          <input name="company" placeholder="Company" onChange={e => handleNestedChange(e, index, 'experience')} />
+          <input name="position" placeholder="Position" onChange={e => handleNestedChange(e, index, 'experience')} />
+          <input name="startDate" placeholder="Start Date" onChange={e => handleNestedChange(e, index, 'experience')} />
+          <input name="endDate" placeholder="End Date" onChange={e => handleNestedChange(e, index, 'experience')} />
+          <textarea name="description" placeholder="Description" onChange={e => handleNestedChange(e, index, 'experience')} />
         </div>
       ))}
 
-      {/* PROFILE IMAGE */}
-      <div className="col-md-6">
-        <label className="form-label fw-semibold">Profile Image</label>
-        <input
-          type="file"
-          className="form-control"
-          accept="image/*"
-          onChange={handleImageUpload}
-        />
-      </div>
+      <input name="skills" placeholder="Skills (comma separated)" onChange={handleChange} />
+      <input name="languages" placeholder="Languages (comma separated)" onChange={handleChange} />
+      <input name="linkedin" placeholder="LinkedIn URL" onChange={handleChange} />
+      <input name="github" placeholder="GitHub URL" onChange={handleChange} />
+      <input name="website" placeholder="Personal Website" onChange={handleChange} />
+      <input name="hobbies" placeholder="Hobbies" onChange={handleChange} />
+      <input name="certifications" placeholder="Certifications (comma separated)" onChange={handleChange} />
+      <input name="achievements" placeholder="Achievements (comma separated)" onChange={handleChange} />
+      <input name="profileImage" placeholder="Profile Image URL" onChange={handleChange} />
 
-      {/* TEMPLATE SELECTOR */}
-      <div className="col-md-6">
-        <label className="form-label fw-semibold">Select Template</label>
-        <select
-          name="template"
-          className="form-select"
-          value={cvData.template}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select a Template</option>
-          <option value="1">Template 1 (Chronological)</option>
-          <option value="2">Template 2 (Functional)</option>
-          <option value="3">Template 3 (Combination)</option>
-          <option value="4">Template 4 (Targeted)</option>
-          <option value="5">Template 5 (Modern Blue)</option>
-        </select>
-      </div>
-
-      {/* COLOR PICKER */}
-      <div className="col-md-6">
-        <label className="form-label fw-semibold">Choose Color</label>
-        <input
-          type="color"
-          name="color"
-          className="form-control form-control-color"
-          value={cvData.color}
-          onChange={handleChange}
-        />
-      </div>
-
-      {/* SAVE BUTTON */}
-      <div className="col-12 text-center">
-        <button
-          type="submit"
-          className="btn btn-danger fw-bold px-4 py-2 rounded-pill shadow-lg"
-        >
-          <i className="bi bi-file-earmark-check-fill"></i> Save CV
-        </button>
-      </div>
+      <button type="submit">Submit CV</button>
     </form>
   );
 };
